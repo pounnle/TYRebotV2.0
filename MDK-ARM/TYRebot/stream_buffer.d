@@ -1,0 +1,14 @@
+tyrebot\stream_buffer.o: ../Middlewares/Third_Party/FreeRTOS/Source/stream_buffer.c
+tyrebot\stream_buffer.o: F:\MDK5\ARM\ARMCC\Bin\..\include\stdint.h
+tyrebot\stream_buffer.o: F:\MDK5\ARM\ARMCC\Bin\..\include\string.h
+tyrebot\stream_buffer.o: ../Middlewares/Third_Party/FreeRTOS/Source/include/FreeRTOS.h
+tyrebot\stream_buffer.o: F:\MDK5\ARM\ARMCC\Bin\..\include\stddef.h
+tyrebot\stream_buffer.o: ../Core/Inc/FreeRTOSConfig.h
+tyrebot\stream_buffer.o: ../Middlewares/Third_Party/FreeRTOS/Source/include/projdefs.h
+tyrebot\stream_buffer.o: ../Middlewares/Third_Party/FreeRTOS/Source/include/portable.h
+tyrebot\stream_buffer.o: ../Middlewares/Third_Party/FreeRTOS/Source/include/deprecated_definitions.h
+tyrebot\stream_buffer.o: ../Middlewares/Third_Party/FreeRTOS/Source/portable/RVDS/ARM_CM4F/portmacro.h
+tyrebot\stream_buffer.o: ../Middlewares/Third_Party/FreeRTOS/Source/include/mpu_wrappers.h
+tyrebot\stream_buffer.o: ../Middlewares/Third_Party/FreeRTOS/Source/include/task.h
+tyrebot\stream_buffer.o: ../Middlewares/Third_Party/FreeRTOS/Source/include/list.h
+tyrebot\stream_buffer.o: ../Middlewares/Third_Party/FreeRTOS/Source/include/stream_buffer.h

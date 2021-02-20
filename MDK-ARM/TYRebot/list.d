@@ -1,0 +1,12 @@
+tyrebot\list.o: ../Middlewares/Third_Party/FreeRTOS/Source/list.c
+tyrebot\list.o: F:\MDK5\ARM\ARMCC\Bin\..\include\stdlib.h
+tyrebot\list.o: ../Middlewares/Third_Party/FreeRTOS/Source/include/FreeRTOS.h
+tyrebot\list.o: F:\MDK5\ARM\ARMCC\Bin\..\include\stddef.h
+tyrebot\list.o: F:\MDK5\ARM\ARMCC\Bin\..\include\stdint.h
+tyrebot\list.o: ../Core/Inc/FreeRTOSConfig.h
+tyrebot\list.o: ../Middlewares/Third_Party/FreeRTOS/Source/include/projdefs.h
+tyrebot\list.o: ../Middlewares/Third_Party/FreeRTOS/Source/include/portable.h
+tyrebot\list.o: ../Middlewares/Third_Party/FreeRTOS/Source/include/deprecated_definitions.h
+tyrebot\list.o: ../Middlewares/Third_Party/FreeRTOS/Source/portable/RVDS/ARM_CM4F/portmacro.h
+tyrebot\list.o: ../Middlewares/Third_Party/FreeRTOS/Source/include/mpu_wrappers.h
+tyrebot\list.o: ../Middlewares/Third_Party/FreeRTOS/Source/include/list.h

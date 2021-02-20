@@ -1,0 +1,16 @@
+tyrebot\tasks.o: ../Middlewares/Third_Party/FreeRTOS/Source/tasks.c
+tyrebot\tasks.o: F:\MDK5\ARM\ARMCC\Bin\..\include\stdlib.h
+tyrebot\tasks.o: F:\MDK5\ARM\ARMCC\Bin\..\include\string.h
+tyrebot\tasks.o: ../Middlewares/Third_Party/FreeRTOS/Source/include/FreeRTOS.h
+tyrebot\tasks.o: F:\MDK5\ARM\ARMCC\Bin\..\include\stddef.h
+tyrebot\tasks.o: F:\MDK5\ARM\ARMCC\Bin\..\include\stdint.h
+tyrebot\tasks.o: ../Core/Inc/FreeRTOSConfig.h
+tyrebot\tasks.o: ../Middlewares/Third_Party/FreeRTOS/Source/include/projdefs.h
+tyrebot\tasks.o: ../Middlewares/Third_Party/FreeRTOS/Source/include/portable.h
+tyrebot\tasks.o: ../Middlewares/Third_Party/FreeRTOS/Source/include/deprecated_definitions.h
+tyrebot\tasks.o: ../Middlewares/Third_Party/FreeRTOS/Source/portable/RVDS/ARM_CM4F/portmacro.h
+tyrebot\tasks.o: ../Middlewares/Third_Party/FreeRTOS/Source/include/mpu_wrappers.h
+tyrebot\tasks.o: ../Middlewares/Third_Party/FreeRTOS/Source/include/task.h
+tyrebot\tasks.o: ../Middlewares/Third_Party/FreeRTOS/Source/include/list.h
+tyrebot\tasks.o: ../Middlewares/Third_Party/FreeRTOS/Source/include/timers.h
+tyrebot\tasks.o: ../Middlewares/Third_Party/FreeRTOS/Source/include/stack_macros.h

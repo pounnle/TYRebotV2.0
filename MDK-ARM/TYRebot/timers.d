@@ -1,0 +1,15 @@
+tyrebot\timers.o: ../Middlewares/Third_Party/FreeRTOS/Source/timers.c
+tyrebot\timers.o: F:\MDK5\ARM\ARMCC\Bin\..\include\stdlib.h
+tyrebot\timers.o: ../Middlewares/Third_Party/FreeRTOS/Source/include/FreeRTOS.h
+tyrebot\timers.o: F:\MDK5\ARM\ARMCC\Bin\..\include\stddef.h
+tyrebot\timers.o: F:\MDK5\ARM\ARMCC\Bin\..\include\stdint.h
+tyrebot\timers.o: ../Core/Inc/FreeRTOSConfig.h
+tyrebot\timers.o: ../Middlewares/Third_Party/FreeRTOS/Source/include/projdefs.h
+tyrebot\timers.o: ../Middlewares/Third_Party/FreeRTOS/Source/include/portable.h
+tyrebot\timers.o: ../Middlewares/Third_Party/FreeRTOS/Source/include/deprecated_definitions.h
+tyrebot\timers.o: ../Middlewares/Third_Party/FreeRTOS/Source/portable/RVDS/ARM_CM4F/portmacro.h
+tyrebot\timers.o: ../Middlewares/Third_Party/FreeRTOS/Source/include/mpu_wrappers.h
+tyrebot\timers.o: ../Middlewares/Third_Party/FreeRTOS/Source/include/task.h
+tyrebot\timers.o: ../Middlewares/Third_Party/FreeRTOS/Source/include/list.h
+tyrebot\timers.o: ../Middlewares/Third_Party/FreeRTOS/Source/include/queue.h
+tyrebot\timers.o: ../Middlewares/Third_Party/FreeRTOS/Source/include/timers.h
