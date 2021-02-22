@@ -9,7 +9,7 @@ void KeyTypeJudge(void)
 		//×ó±ß³¤°´
 		if(KeyStatus[LEFT_DOWN].KeyDownLastTime_ms>2000)
 		{
-			printf("LEFT LONG\n");
+//			printf("LEFT LONG\n");
 			KeyStatus[LEFT_DOWN].OutTimeFlag = 1;
 			KeyStatus[LEFT_DOWN].KeyDownLastTime_ms= 0;
 		}

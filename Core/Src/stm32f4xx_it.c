@@ -270,22 +270,21 @@ void USART3_IRQHandler(void)
 	}
 	else	if(__HAL_UART_GET_FLAG(&huart3,UART_FLAG_IDLE)!= RESET) // 串口空闲中断
 	{		                                 // 数据帧置位，标识接收到一个完整数据帧
-//		if(Usart3RxBuffQueue != NULL)  //消息队列创建成功
-//		{
-//			BaseType_t xHigherPriorityTaskWoken;
-//			xQueueSendFromISR(Usart3RxBuffQueue,Uart3RxBuffer,&xHigherPriorityTaskWoken);//向队列中发送数据
-//			memset(Uart3RxBuffer,0,RxCount3);
+		if(Usart3RxBuffQueue != NULL)  //消息队列创建成功
+		{
+			BaseType_t xHigherPriorityTaskWoken;
+			xQueueSendFromISR(Usart3RxBuffQueue,Uart3RxBuffer,&xHigherPriorityTaskWoken);//向队列中发送数据
+			memset(Uart3RxBuffer,0,RxCount_3);
 			RxCount_3 = 0;
 			__HAL_UART_CLEAR_FLAG(&huart3,UART_FLAG_IDLE); // 清除空闲中断标志
 			__HAL_UART_DISABLE_IT(&huart3,UART_IT_IDLE);    // 关闭空闲中断
 			UnpackRemoteCmd(Uart3RxBuffer,12);
-//			Uart3RxCpltFlag=1;
-//			portYIELD_FROM_ISR(xHigherPriorityTaskWoken);//如果需要的话进行一次任务切换
-//		}
-//		else
-//		{
-//			
-//		}
+			portYIELD_FROM_ISR(xHigherPriorityTaskWoken);//如果需要的话进行一次任务切换
+		}
+		else
+		{
+			
+		}
 		
 	}
   /* USER CODE END USART3_IRQn 0 */
@@ -320,21 +319,21 @@ void UART4_IRQHandler(void)
 	}
 	else if(__HAL_UART_GET_FLAG(&huart4,UART_FLAG_IDLE)!= RESET) // 串口空闲中断
 	{		                                 // 数据帧置位，标识接收到一个完整数据帧
-//		if(Usart4RxBuffQueue != NULL)  //消息队列创建成功
-//		{
-//			BaseType_t xHigherPriorityTaskWoken;
-//			xQueueSendFromISR(Usart4RxBuffQueue,Uart4RxBuffer,&xHigherPriorityTaskWoken);//向队列中发送数据
-//			memset(Uart4RxBuffer,0,RxCount_4);
+		if(Usart4RxBuffQueue != NULL)  //消息队列创建成功
+		{
+			BaseType_t xHigherPriorityTaskWoken;
+			xQueueSendFromISR(Usart4RxBuffQueue,Uart4RxBuffer,&xHigherPriorityTaskWoken);//向队列中发送数据
+			memset(Uart4RxBuffer,0,RxCount_4);
 			__HAL_UART_CLEAR_FLAG(&huart4,UART_FLAG_IDLE); // 清除空闲中断标志
 			__HAL_UART_DISABLE_IT(&huart4,UART_IT_IDLE);    // 关闭空闲中断
 			RxCount_4 = 0;
 			UnpackRemoteCmd(Uart4RxBuffer,12);
-//			portYIELD_FROM_ISR(xHigherPriorityTaskWoken);//如果需要的话进行一次任务切换
-//		}
-//		else
-//		{
-//			
-//		}
+			portYIELD_FROM_ISR(xHigherPriorityTaskWoken);//如果需要的话进行一次任务切换
+		}
+		else
+		{
+			
+		}
 		
 	}
   /* USER CODE END UART4_IRQn 0 */

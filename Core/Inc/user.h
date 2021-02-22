@@ -30,7 +30,7 @@
 
 /*角度、速度阈值配置*/
 #define SPEED_EPS 8.0
-#define ANGLE_EPS 3.0
+#define ANGLE_EPS 5.0
 
 /*************************************************
 ----------------------------------
@@ -90,10 +90,10 @@
 #define STEP_FOOT_TO_ERECT_KGJ_ANGLE 0
 #define STEP_FOOT_TO_ERECT_XGJ_ANGLE 0
 /**************时间****************/
-#define STEP_FOOT_KGJ_TIMES 1.5
-#define STEP_FOOT_XGJ_TIMES 1.8
-#define STEP_FOOT_1_KGJ_TIMES 2.1
-#define STEP_FOOT_1_XGJ_TIMES 1.5
+#define STEP_FOOT_KGJ_TIMES 2
+#define STEP_FOOT_XGJ_TIMES 2.5
+#define STEP_FOOT_1_KGJ_TIMES 2.5
+#define STEP_FOOT_1_XGJ_TIMES 2
 #define STEP_FOOT_TO_ERECT_KGJ_TIMES 1.5
 #define STEP_FOOT_TO_ERECT_XGJ_TIMES 1.5
 /*命令宏*/

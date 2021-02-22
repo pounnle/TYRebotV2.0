@@ -170,7 +170,6 @@ void CanTxDataPro(void const * argument)           //发送CAN数据任务
   for(;;)
   {
 	taskENTER_CRITICAL();           //进入临界区
-	GetWalkPhase();
 	TransExternalCmdToInternalCmd();
 	GetMotorObjectAngleAndSpeed();
 	CtrlMotor();
@@ -228,6 +227,7 @@ void CanDataPro(void const * argument)           //电机数据处理任务
   for(;;)
   {
 	GetAllMotorState();
+	GetWalkPhase();
     osDelay(5);
   }
   /* USER CODE END CanDataPro */
@@ -266,7 +266,7 @@ void KeyScanPro(void const * argument)
   for(;;)
   {
 	KeyTypeJudge();
-    osDelay(1);
+    osDelay(5);
   }
   /* USER CODE END KeyScanPro */
 }
