@@ -201,6 +201,32 @@ void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *hcan)
 				memcpy(CanMotorAngles[RIGHT_XGJ].Data,RxData,RxHeader.DLC);
 				CanMotorAngles[RIGHT_XGJ].SpaceTimes = 0;
 				break;
+		case 0x402:
+			CanMotorAngles[LEFT_KGJ].Id = RxHeader.StdId;
+			CanMotorAngles[LEFT_KGJ].Len = RxHeader.DLC;
+			memcpy(CanMotorAngles[LEFT_KGJ].Data,RxData,RxHeader.DLC);
+			CanMotorAngles[LEFT_KGJ].SpaceTimes = 0;
+			break;
+		case 0x403:
+			CanMotorAngles[LEFT_XGJ].Id = RxHeader.StdId;
+			CanMotorAngles[LEFT_XGJ].Len = RxHeader.DLC;
+			memcpy(CanMotorAngles[LEFT_XGJ].Data,RxData,RxHeader.DLC);
+			CanMotorAngles[LEFT_XGJ].SpaceTimes = 0;
+			break;
+		case 0x404:
+			CanMotorAngles[RIGHT_KGJ].Id = RxHeader.StdId;
+			CanMotorAngles[RIGHT_KGJ].Len = RxHeader.DLC;
+			memcpy(CanMotorAngles[RIGHT_KGJ].Data,RxData,RxHeader.DLC);
+			CanMotorAngles[RIGHT_KGJ].SpaceTimes = 0;
+			break;
+		case 0x405:
+			CanMotorAngles[RIGHT_XGJ].Id = RxHeader.StdId;
+			CanMotorAngles[RIGHT_XGJ].Len = RxHeader.DLC;
+			memcpy(CanMotorAngles[RIGHT_XGJ].Data,RxData,RxHeader.DLC);
+			CanMotorAngles[RIGHT_XGJ].SpaceTimes = 0;
+			break;
+		default :
+			break ;
 		}
 		HAL_CAN_ActivateNotification(&hcan1, CAN_IT_RX_FIFO0_MSG_PENDING);
 	}

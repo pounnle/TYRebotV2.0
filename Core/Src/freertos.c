@@ -246,6 +246,7 @@ void GetVoltagePro(void const * argument)
   /* Infinite loop */
   for(;;)
   {
+	 CompareTargetAngle();
 	//GetBatteryVoltage();
     osDelay(1000);
   }

@@ -65,6 +65,13 @@ const uint16_t CanIdsOfMotorBackData[] =
     MOTOR_BACK_CAN_ID + RIGHT_XGJ_NODE_ID ,
 };
 
+const uint16_t CanIdsOfMotorBackSyncho[] =
+{
+    MOTOR_SYNCHRO_CAN_ID + LEFT_KGJ_NODE_ID  ,
+    MOTOR_SYNCHRO_CAN_ID + RIGHT_KGJ_NODE_ID ,
+    MOTOR_SYNCHRO_CAN_ID + LEFT_XGJ_NODE_ID  ,
+    MOTOR_SYNCHRO_CAN_ID + RIGHT_XGJ_NODE_ID ,
+};
 const uint16_t CanIdsOfCtrlMotor[] =
 {
     MOTOR_CTRL_CAN_ID + LEFT_KGJ_NODE_ID  ,
@@ -141,6 +148,11 @@ void GetAllMotorState(void)
 				NowMotorData.MotorSpeeds[MotorIndex] =
 						LittleEndingShortToFloat((uint8_t *)CanMotorAngles[MotorIndex].Data+2, MOTOR_BACK_DATA_SCALE);  //计算出电机当前的速度信息
 			}
+
+		}
+		if ((CanMotorAngles[MotorIndex].Len == 8) && (CanIdsOfMotorBackSyncho[MotorIndex] == CanMotorAngles[MotorIndex].Id))
+		{
+			NowMotorData.MotorSynAngle[MotorIndex] = LittleEndingShortToFloat((uint8_t *)CanMotorAngles[MotorIndex].Data, MOTOR_BACK_DATA_SCALE);
 		}
     }
 }
@@ -244,6 +256,7 @@ void GetMotorObjectAngleAndSpeed(void)
 					case CMD_TO_STEP_RIGHT_FOOT_1:
 						if(NowMotorData.MotorAngles[RIGHT_XGJ] > (STEP_FOOT_1_KGJ_ANGLE - ANGLE_EPS) && NowMotorData.MotorStatus[RIGHT_XGJ] == MOTOR_STOPPING)
 						{
+							HAL_Delay(50);
 							CmdFalg = CMD_TO_STEP_RIGHT_FOOT_2;
 							//printf(" NOW : LEFT_FOOT_STEP , Next : CMD_TO_STEP_RIGHT_FOOT_2 \n ");
 						}
@@ -251,6 +264,7 @@ void GetMotorObjectAngleAndSpeed(void)
 					case CMD_TO_STEP_RIGHT_FOOT_2:
 						if(NowMotorData.MotorAngles[RIGHT_KGJ] < -(STEP_FOOT_1_KGJ_ANGLE - ANGLE_EPS) && NowMotorData.MotorStatus[RIGHT_KGJ] == MOTOR_STOPPING)
 						{
+							HAL_Delay(100);
 							CmdFalg = CMD_TO_STEP_RIGHT_FOOT;
 							//printf(" NOW : LEFT_FOOT_STEP , Next : CMD_TO_STEP_RIGHT_FOOT \n ");
 						}
@@ -284,6 +298,7 @@ void GetMotorObjectAngleAndSpeed(void)
 					case CMD_TO_STEP_LEFT_FOOT_1:
 						if( NowMotorData.MotorAngles[LEFT_XGJ] < -(STEP_FOOT_1_XGJ_ANGLE - ANGLE_EPS) && NowMotorData.MotorStatus[LEFT_XGJ] == MOTOR_STOPPING)
 						{
+							HAL_Delay(50);
 							CmdFalg = CMD_TO_STEP_LEFT_FOOT_2;
 							//printf(" NOW : RIGHT_FOOT_STEP , Next : CMD_TO_STEP_LEFT_FOOT_2 \n ");
 						}
@@ -291,6 +306,7 @@ void GetMotorObjectAngleAndSpeed(void)
 					case CMD_TO_STEP_LEFT_FOOT_2:
 						if( NowMotorData.MotorAngles[LEFT_KGJ] > (STEP_FOOT_1_KGJ_ANGLE - ANGLE_EPS) &&NowMotorData.MotorStatus[LEFT_KGJ] == MOTOR_STOPPING)
 						{
+							HAL_Delay(100);
 							CmdFalg = CMD_TO_STEP_LEFT_FOOT;
 							//printf(" NOW : RIGHT_FOOT_STEP , Next : CMD_TO_STEP_LEFT_FOOT \n ");
 						}
@@ -897,6 +913,17 @@ void GetBatteryVoltage(void)
 	}
 }
 
+void CompareTargetAngle(void)
+{
+	int MotorIndex = 0;
+	for(MotorIndex = LEFT_KGJ; MotorIndex <= RIGHT_XGJ ; MotorIndex++)
+	{
+		if(NowMotorData.MotorSynAngle[MotorIndex] != ObjetMotorData.MotorAngles[MotorIndex])
+		{
+			printf("asdddddddddddddddddddddddddddddddddddddddddd\n");
+		}
+	}
+}
 void SetExternalCtrlCmd( CTRL_CMD_ENUM Cmd )
 {
     ExternalCtrlCmd_g.Cmd = Cmd;

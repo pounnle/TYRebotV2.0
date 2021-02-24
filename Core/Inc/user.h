@@ -23,7 +23,7 @@
 #define MOTOR_BACK_CAN_ID  0x300
 #define MOTOR_HEART_CAN_ID  0x700
 #define MOTOR_RESPONSE_CAN_ID  0x200
-
+#define MOTOR_SYNCHRO_CAN_ID 0x400
 /*CAN 电机返回数据放大系数*/
 #define MOTOR_BACK_DATA_SCALE 100
 #define MotorBackDataScale 100
@@ -218,6 +218,7 @@ typedef struct
     float MotorAngles[4];
     float MotorSpeeds[4];
 	float MotorRunTimes[4];
+	float MotorSynAngle[4];
 	MOTOR_STATUS_ENUM MotorStatus[4];
 }MotorData_t;
 
@@ -269,7 +270,7 @@ void GetMotorObjectAngleAndSpeed(void);
 void GetWalkPhase(void);
 void UnpackRemoteCmd( uint8_t *buf, uint8_t len );
 void GetAllMotorState(void);
-
+void CompareTargetAngle(void);
 void UpLoadAppDataPro(void);
 void GetBatteryVoltage(void);
 STATUS_ENUM CheckStatus(void); //自检状态;
