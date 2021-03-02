@@ -28,8 +28,9 @@
 /* USER CODE BEGIN Includes */
 #include "user.h"
 #include "stick.h"
+#include "task.h"
 /* USER CODE END Includes */
-
+char InfoBuffer[500];				//保存信息的数组
 /* Private typedef -----------------------------------------------------------*/
 /* USER CODE BEGIN PTD */
 
@@ -44,7 +45,7 @@
 /* USER CODE BEGIN PM */
 QueueHandle_t Usart3RxBuffQueue;         //串口消息队列
 QueueHandle_t Usart4RxBuffQueue;         //串口消息队列
-//QueueHandle_t Can1RxBuffQueue;           //Can1消息队列
+SemaphoreHandle_t BinarySemaphore;	         //二值信号量句柄
 EventGroupHandle_t EventGroupHandler;	   //事件标志组句柄
 /* USER CODE END PM */
 
@@ -118,7 +119,8 @@ void MX_FREERTOS_Init(void) {
 //	Can1RxBuffQueue = xQueueCreate(1,CAN_DATA_BUFFER_SIZE);    //创建消息CanBuffer,队列项长度是串口接收缓冲区长度
 	Usart3RxBuffQueue = xQueueCreate(1,UART3_RX_BUFFER_SIZE);  //创建消息串口3Buffer,队列项长度是串口接收缓冲区长度
 	Usart4RxBuffQueue = xQueueCreate(1,UART4_RX_BUFFER_SIZE);  //创建消息串口3Buffer,队列项长度是串口接收缓冲区长度
-	EventGroupHandler=xEventGroupCreate();	 //创建事件标志组
+	EventGroupHandler = xEventGroupCreate();	 //创建事件标志组
+	BinarySemaphore   = xSemaphoreCreateBinary();
   /* USER CODE END RTOS_QUEUES */
 
   /* Create the thread(s) */
@@ -135,7 +137,7 @@ void MX_FREERTOS_Init(void) {
   CanDataProTaskHandle = osThreadCreate(osThread(CanDataProTask), NULL);
 
   /* definition and creation of GetVoltageTask */
-  osThreadDef(GetVoltageTask, GetVoltagePro, osPriorityLow, 0, 128);
+  osThreadDef(GetVoltageTask, GetVoltagePro, osPriorityLow, 0, 1280);
   GetVoltageTaskHandle = osThreadCreate(osThread(GetVoltageTask), NULL);
 
   /* definition and creation of KeyScanTask */
@@ -224,11 +226,20 @@ void CanDataPro(void const * argument)           //电机数据处理任务
 {
   /* USER CODE BEGIN CanDataPro */
   /* Infinite loop */
+  BaseType_t err=pdFALSE;
   for(;;)
   {
-	GetAllMotorState();
-	GetWalkPhase();
-    osDelay(5);
+	if(BinarySemaphore!=NULL)
+	{	  
+		err=xSemaphoreTake(BinarySemaphore,portMAX_DELAY);	//获取信号量
+		if(err==pdTRUE)										//获取信号量成功
+		{
+			GetAllMotorState();
+			GetWalkPhase();
+			
+		}
+	}
+	
   }
   /* USER CODE END CanDataPro */
 }
@@ -248,7 +259,8 @@ void GetVoltagePro(void const * argument)
   {
 	 CompareTargetAngle();
 	//GetBatteryVoltage();
-    osDelay(1000);
+	HAL_GPIO_TogglePin(GPIOB,GPIO_PIN_1);HAL_GPIO_TogglePin(GPIOB,GPIO_PIN_2);HAL_GPIO_TogglePin(GPIOE,GPIO_PIN_5);
+    osDelay(20);
   }
   /* USER CODE END GetVoltagePro */
 }
@@ -308,13 +320,13 @@ void SystemCheckPro(void const * argument)
 		SystemState = CheckStatus();
 		if(SystemState == STATUS_NORMAL)
 		{
-			HAL_GPIO_WritePin(GPIOE,GPIO_PIN_5,GPIO_PIN_RESET);
+			//HAL_GPIO_WritePin(GPIOE,GPIO_PIN_5,GPIO_PIN_RESET);
 			vTaskResume(CanTxDataTaskHandle);
 			
 		}
 		else
 		{
-			HAL_GPIO_WritePin(GPIOE,GPIO_PIN_5,GPIO_PIN_SET);
+			//HAL_GPIO_WritePin(GPIOE,GPIO_PIN_5,GPIO_PIN_SET);
 			NowWalkPhase_g = ERROR_WALK_PHASE;
 			NextWalkPhase_g = ERROR_WALK_PHASE;
 			LastWalkPhase_g = ERROR_WALK_PHASE;

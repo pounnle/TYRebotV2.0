@@ -3,8 +3,13 @@
 #include "stick.h"
 #include "usart.h"
 #include "flash.h"
-
-
+#include "math.h"
+float STEP_FOOT_KGJ_TIMES=1.3; //1.55  //1 KUAI
+float STEP_FOOT_XGJ_TIMES=1.7;  //1.95 //1.4
+float STEP_FOOT_1_KGJ_TIMES=1.7;//1.95 //1.4
+float STEP_FOOT_1_XGJ_TIMES =1.3;//1.55//1
+float SPEED_EPS =10.0;
+float ANGLE_EPS =2.0;
 /*全局变量*/
 volatile MotorData_t NowMotorData;
 volatile MotorData_t ObjetMotorData;
@@ -14,12 +19,13 @@ CANFrameData_t CanMotorAngles[4];
 WALK_PHASE_ENUM LastWalkPhase_g = ERROR_WALK_PHASE;
 WALK_PHASE_ENUM NowWalkPhase_g = ERROR_WALK_PHASE;
 WALK_PHASE_ENUM NextWalkPhase_g = ERROR_WALK_PHASE ;
-uint8_t  UploadMotorDataLeft[13] = {0};  //上传左腿电机数据
-uint8_t  UploadMotorDataRight[13]= {0};  //上传右腿点击数据
-uint8_t  UploadCellData[13] = {0};  //上传右腿点击数据
+uint8_t  UploadMotorDataLeft[14] = {0};  //上传左腿电机数据
+uint8_t  UploadMotorDataRight[14]= {0};  //上传右腿点击数据
+uint8_t  UploadCellData[14] = {0};  //上传右腿点击数据
 uint32_t WriteFlashBuffer[WRITE_FLASH_ID_SIZE]= {0};   //16进制
 uint32_t ReadFlashBuffer[WRITE_FLASH_DATA_SIZE] = {0};
 uint8_t CmdFalg = CMD_NULL;
+uint8_t OldCmd = 0xff;
 uint8_t CanStartRxFlag = 0;
 
 
@@ -39,23 +45,10 @@ MotorAnglesOfWalkPhase_t Maps_MotorAnglesOfWalkPhase[] =
     { LEFT_FOOT_STEP,  { STEP_FOOT_KGJ_ANGLE,  SITDOWN_TO_ERECT_KGJ_ANGLE,  
                          -STEP_FOOT_XGJ_ANGLE, SITDOWN_TO_ERECT_XGJ_ANGLE } },
 												
-    { RIGHT_FOOT_STEP, { SITDOWN_TO_ERECT_KGJ_ANGLE,  -STEP_FOOT_KGJ_ANGLE,  
+    { RIGHT_FOOT_STEP, { -SITDOWN_TO_ERECT_KGJ_ANGLE,  -STEP_FOOT_KGJ_ANGLE,  
                          SITDOWN_TO_ERECT_XGJ_ANGLE,  STEP_FOOT_XGJ_ANGLE } },  																
 };
 
-//总体步相迁移图
-//StateMachine_t WalkStateMachineTransMap[] = 
-//{
-//	{ SITDOWNED,        TO_ERECT,   ERECTED,          TO_KEEP, 1},      //起立
-//	{ ERECTED,          TO_SITDOWN, SITDOWNED,        TO_KEEP, 1},
-//	{ ERECTED,          TO_WALK,    LEFT_FOOT_STEP,  TO_KEEP,  1},
-//	{ LEFT_FOOT_STEP,   TO_WALK,    RIGHT_FOOT_STEP, TO_KEEP,  1},
-//	{ RIGHT_FOOT_STEP,  TO_WALK,    LEFT_FOOT_STEP,  TO_KEEP,  1},
-//	{ LEFT_FOOT_STEP,   TO_ERECT,   ERECTED,          TO_KEEP, 1},
-//	{ RIGHT_FOOT_STEP , TO_ERECT,   ERECTED,          TO_KEEP, 1},
-//	{ ERROR_WALK_PHASE, TO_ERECT,   ERECTED,          TO_KEEP, 1},
-//	{ ERROR_WALK_PHASE, TO_SITDOWN, SITDOWNED,        TO_KEEP, 1},
-//};
 
 const uint16_t CanIdsOfMotorBackData[] =
 {
@@ -216,11 +209,11 @@ void GetWalkPhase(void)
         {
             NowWalkPhase_g =  WalkPhase;
 			LastWalkPhase_g = NowWalkPhase_g;
-				if(NowWalkPhase_g == NextWalkPhase_g)
-	{
-		NextWalkPhase_g = KEEPED;
-	}
-            return;
+			if(NowWalkPhase_g == NextWalkPhase_g)
+			{
+				NextWalkPhase_g = KEEPED;
+			}
+				return;
         }
     } 
     NowWalkPhase_g = ERROR_WALK_PHASE;
@@ -241,15 +234,37 @@ void GetMotorObjectAngleAndSpeed(void)
 		case LEFT_FOOT_STEP:
 			if(NextWalkPhase_g ==  ERECTED)  //命令是 直立
 			{
-				CmdFalg = CMD_TO_ERECT;
-				//printf(" NOW : LEFT_FOOT_STEP , Next : CMD_TO_ERECT \n ");
+				if(CmdFalg == CMD_NULL)
+				{
+					CmdFalg = CMD_TO_ERECT_3;
+				}
+				switch(CmdFalg)
+				{
+					case CMD_TO_ERECT_3:
+						if( NowMotorData.MotorAngles[LEFT_KGJ] >  (STEP_FOOT_TO_ERECT_KGJ_1_ANGLE - ANGLE_EPS) && 
+							NowMotorData.MotorAngles[LEFT_XGJ] < -(STEP_FOOT_TO_ERECT_XGJ_1_ANGLE - ANGLE_EPS) &&  
+							IsAllMotorStop())
+						{
+							HAL_Delay(50);
+							CmdFalg = CMD_TO_ERECT;
+						}
+						break;
+					case CMD_TO_ERECT:
+						if(NowWalkPhase_g == ERECTED)
+						{
+							CmdFalg = CMD_NULL;
+						}
+						break;
+					default :
+						break ;
+					
+				}
 			}
 			if(NextWalkPhase_g == RIGHT_FOOT_STEP)  //命令是 迈右腿
 			{
 				if(CmdFalg == CMD_NULL)
 				{
 					CmdFalg = CMD_TO_STEP_RIGHT_FOOT_1;
-					//printf(" NOW : LEFT_FOOT_STEP , Next : CMD_TO_STEP_RIGHT_FOOT_1 \n ");
 				}
 				switch(CmdFalg)
 				{
@@ -283,8 +298,31 @@ void GetMotorObjectAngleAndSpeed(void)
 		case RIGHT_FOOT_STEP:
 			if(NextWalkPhase_g ==  ERECTED)  //命令是 直立
 			{
-				CmdFalg = CMD_TO_ERECT;
-				//printf(" NOW : RIGHT_FOOT_STEP , Next : CMD_TO_ERECT \n ");
+				if(CmdFalg == CMD_NULL)
+				{
+					CmdFalg = CMD_TO_ERECT_4;
+				}
+				switch(CmdFalg)
+				{
+					case CMD_TO_ERECT_4:
+						if( NowMotorData.MotorAngles[RIGHT_KGJ] <-(STEP_FOOT_TO_ERECT_KGJ_1_ANGLE - ANGLE_EPS) && 
+							NowMotorData.MotorAngles[RIGHT_XGJ] > (STEP_FOOT_TO_ERECT_XGJ_1_ANGLE - ANGLE_EPS) &&  
+							IsAllMotorStop())
+						{
+							HAL_Delay(50);
+							CmdFalg = CMD_TO_ERECT;
+						}
+						break;
+					case CMD_TO_ERECT:
+						if(NowWalkPhase_g == ERECTED)
+						{
+							CmdFalg = CMD_NULL;
+						}
+						break;
+					default :
+						break ;
+					
+				}
 			}
 			if(NextWalkPhase_g == LEFT_FOOT_STEP)  //命令是 迈左腿
 			{
@@ -321,10 +359,8 @@ void GetMotorObjectAngleAndSpeed(void)
 						break;
 				}				
 			}
-			break;	
-			
-			
-		/*当前步相为 直立*/
+			break;			
+		/*当前步相为直立*/
 		case ERECTED:
 			if(NextWalkPhase_g ==  SITDOWNED)  //命令是 坐下
 			{
@@ -377,16 +413,23 @@ void GetMotorObjectAngleAndSpeed(void)
 				switch(CmdFalg)
 				{
 					case CMD_TO_ERECT_1:
-						
-						if(  NowMotorData.MotorAngles[LEFT_KGJ] > (SITDOWN_TO_ERECT_1_KGJ_ANGLE - ANGLE_EPS) && 
-							 NowMotorData.MotorAngles[RIGHT_KGJ]<-(SITDOWN_TO_ERECT_1_KGJ_ANGLE - ANGLE_EPS) && 
-							 NowMotorData.MotorAngles[LEFT_XGJ] <-(SITDOWN_TO_ERECT_1_XGJ_ANGLE - ANGLE_EPS) && 
+						if(  NowMotorData.MotorAngles[LEFT_XGJ] <-(SITDOWN_TO_ERECT_1_XGJ_ANGLE - ANGLE_EPS) && 
 							 NowMotorData.MotorAngles[RIGHT_XGJ]> (SITDOWN_TO_ERECT_1_XGJ_ANGLE - ANGLE_EPS) &&  
 							IsAllMotorStop()      )   //弯腰收腿是否到位
 						{
-							CmdFalg = CMD_TO_ERECT;	
+							osDelay(1000);
+							CmdFalg = CMD_TO_ERECT_2;	
 							//printf(" NOW : SITDOWNED , Next : CMD_TO_ERECT \n ");
 						}
+						break;
+					case CMD_TO_ERECT_2:
+						if(NowMotorData.MotorAngles[LEFT_KGJ] > (SITDOWN_TO_ERECT_1_KGJ_ANGLE - ANGLE_EPS) && 
+							 NowMotorData.MotorAngles[RIGHT_KGJ]<-(SITDOWN_TO_ERECT_1_KGJ_ANGLE - ANGLE_EPS) &&
+							 NowMotorData.MotorStatus[LEFT_KGJ] == MOTOR_STOPPING &&
+							 NowMotorData.MotorStatus[RIGHT_KGJ] == MOTOR_STOPPING)
+						{
+							CmdFalg = CMD_TO_ERECT;
+						}							
 						break ;
 					case CMD_TO_ERECT:
 						if(NowWalkPhase_g == ERECTED)
@@ -417,63 +460,11 @@ void GetMotorObjectAngleAndSpeed(void)
 			break;
 	}
 	int MotorIndex = 0;
-	static uint8_t OldCmd = 0xff;
 	if(OldCmd != CmdFalg)
 	{
 		switch(CmdFalg)
 		{
 			case CMD_NULL:
-				break;
-			case CMD_TO_SITDOWN:
-					ObjetMotorData.MotorAngles[LEFT_KGJ]   =  ERECT_TO_SITDOWN_KGJ_ANGLE;
-					ObjetMotorData.MotorAngles[RIGHT_KGJ]  = -ERECT_TO_SITDOWN_KGJ_ANGLE;
-					ObjetMotorData.MotorAngles[LEFT_XGJ]   = -ERECT_TO_SITDOWN_XGJ_ANGLE;
-					ObjetMotorData.MotorAngles[RIGHT_XGJ]  =  ERECT_TO_SITDOWN_XGJ_ANGLE;
-					if(LastWalkPhase_g == ERECTED)
-					{
-						ObjetMotorData.MotorRunTimes[LEFT_KGJ] =  ERECT_TO_SITDOWN_KGJ_TIMES;
-						ObjetMotorData.MotorRunTimes[RIGHT_KGJ]=  ERECT_TO_SITDOWN_KGJ_TIMES;
-						ObjetMotorData.MotorRunTimes[LEFT_XGJ] =  ERECT_TO_SITDOWN_XGJ_TIMES;
-						ObjetMotorData.MotorRunTimes[RIGHT_XGJ]=  ERECT_TO_SITDOWN_XGJ_TIMES;
-					}
-					else
-					{
-						ObjetMotorData.MotorRunTimes[LEFT_KGJ] =  ERROR_TO_SITDOWN_KGJ_TIMES;
-						ObjetMotorData.MotorRunTimes[RIGHT_KGJ]=  ERROR_TO_SITDOWN_KGJ_TIMES;
-						ObjetMotorData.MotorRunTimes[LEFT_XGJ] =  ERROR_TO_SITDOWN_XGJ_TIMES;
-						ObjetMotorData.MotorRunTimes[RIGHT_XGJ]=  ERROR_TO_SITDOWN_XGJ_TIMES;
-					}
-				break;
-			case CMD_TO_ERECT_1:
-				ObjetMotorData.MotorAngles[LEFT_KGJ]   =  SITDOWN_TO_ERECT_1_KGJ_ANGLE;
-				ObjetMotorData.MotorAngles[RIGHT_KGJ]  = -SITDOWN_TO_ERECT_1_KGJ_ANGLE;
-				ObjetMotorData.MotorAngles[LEFT_XGJ]   = -SITDOWN_TO_ERECT_1_XGJ_ANGLE;
-				ObjetMotorData.MotorAngles[RIGHT_XGJ]  =  SITDOWN_TO_ERECT_1_XGJ_ANGLE;
-			
-				ObjetMotorData.MotorRunTimes[LEFT_KGJ] =  SITDOWN_TO_ERECT_1_KGJ_TIMES;
-				ObjetMotorData.MotorRunTimes[RIGHT_KGJ]=  SITDOWN_TO_ERECT_1_KGJ_TIMES;
-				ObjetMotorData.MotorRunTimes[LEFT_XGJ] =  SITDOWN_TO_ERECT_1_XGJ_TIMES;
-				ObjetMotorData.MotorRunTimes[RIGHT_XGJ]=  SITDOWN_TO_ERECT_1_XGJ_TIMES;
-				break;
-			case CMD_TO_ERECT:
-				ObjetMotorData.MotorAngles[LEFT_KGJ]   =  SITDOWN_TO_ERECT_KGJ_ANGLE;
-				ObjetMotorData.MotorAngles[RIGHT_KGJ]  = -SITDOWN_TO_ERECT_KGJ_ANGLE;
-				ObjetMotorData.MotorAngles[LEFT_XGJ]   = -SITDOWN_TO_ERECT_XGJ_ANGLE;
-				ObjetMotorData.MotorAngles[RIGHT_XGJ]  =  SITDOWN_TO_ERECT_XGJ_ANGLE;
-				if(LastWalkPhase_g == SITDOWNED)
-				{
-					ObjetMotorData.MotorRunTimes[LEFT_KGJ] =  SITDOWN_TO_ERECT_KGJ_TIMES;
-					ObjetMotorData.MotorRunTimes[RIGHT_KGJ]=  SITDOWN_TO_ERECT_KGJ_TIMES;
-					ObjetMotorData.MotorRunTimes[LEFT_XGJ] =  SITDOWN_TO_ERECT_XGJ_TIMES;
-					ObjetMotorData.MotorRunTimes[RIGHT_XGJ]=  SITDOWN_TO_ERECT_XGJ_TIMES;
-				}
-				else //if(LastWalkPhase_g == LEFT_FOOT_STEP ||LastWalkPhase_g == RIGHT_FOOT_STEP)
-				{
-					ObjetMotorData.MotorRunTimes[LEFT_KGJ] =  ERROR_TO_ERECT_KGJ_TIMES;
-					ObjetMotorData.MotorRunTimes[RIGHT_KGJ]=  ERROR_TO_ERECT_KGJ_TIMES;
-					ObjetMotorData.MotorRunTimes[LEFT_XGJ] =  ERROR_TO_ERECT_XGJ_TIMES;
-					ObjetMotorData.MotorRunTimes[RIGHT_XGJ]=  ERROR_TO_ERECT_XGJ_TIMES;
-				}
 				break;
 			case CMD_TO_STEP_LEFT_FOOT:
 				ObjetMotorData.MotorAngles[LEFT_KGJ]   =  STEP_FOOT_KGJ_ANGLE;
@@ -483,7 +474,7 @@ void GetMotorObjectAngleAndSpeed(void)
 				break;
 			case CMD_TO_STEP_LEFT_FOOT_1:
 				ObjetMotorData.MotorAngles[LEFT_KGJ]   =  STEP_FOOT_1_KGJ_ANGLE;
-				ObjetMotorData.MotorAngles[RIGHT_KGJ]  = -SITDOWN_TO_ERECT_KGJ_ANGLE;
+				ObjetMotorData.MotorAngles[RIGHT_KGJ]  = SITDOWN_TO_ERECT_KGJ_ANGLE;//-SITDOWN_TO_ERECT_KGJ_ANGLE;
 				ObjetMotorData.MotorAngles[LEFT_XGJ]   = -STEP_FOOT_1_XGJ_ANGLE;
 				ObjetMotorData.MotorAngles[RIGHT_XGJ]  =  SITDOWN_TO_ERECT_KGJ_ANGLE;
 			
@@ -499,12 +490,12 @@ void GetMotorObjectAngleAndSpeed(void)
 				break;
 			case CMD_TO_STEP_RIGHT_FOOT:
 				ObjetMotorData.MotorAngles[RIGHT_KGJ]   =  -STEP_FOOT_KGJ_ANGLE;
-			
+
 				ObjetMotorData.MotorRunTimes[RIGHT_KGJ]=  STEP_FOOT_KGJ_TIMES;
 
 				break;
 			case CMD_TO_STEP_RIGHT_FOOT_1:
-				ObjetMotorData.MotorAngles[LEFT_KGJ]   =  SITDOWN_TO_ERECT_KGJ_ANGLE;
+				ObjetMotorData.MotorAngles[LEFT_KGJ]   =  -SITDOWN_TO_ERECT_KGJ_ANGLE;//SITDOWN_TO_ERECT_KGJ_ANGLE;
 				ObjetMotorData.MotorAngles[RIGHT_KGJ]  = -STEP_FOOT_1_KGJ_ANGLE;
 				ObjetMotorData.MotorAngles[LEFT_XGJ]   = -SITDOWN_TO_ERECT_XGJ_ANGLE;
 				ObjetMotorData.MotorAngles[RIGHT_XGJ]  =  STEP_FOOT_1_XGJ_ANGLE;
@@ -518,6 +509,105 @@ void GetMotorObjectAngleAndSpeed(void)
 				ObjetMotorData.MotorAngles[RIGHT_XGJ]  = STEP_FOOT_XGJ_ANGLE;
 			
 				ObjetMotorData.MotorRunTimes[RIGHT_XGJ]= STEP_FOOT_XGJ_TIMES;			
+				break;
+			case CMD_TO_SITDOWN:
+					ObjetMotorData.MotorAngles[LEFT_KGJ]   =  ERECT_TO_SITDOWN_KGJ_ANGLE;
+					ObjetMotorData.MotorAngles[RIGHT_KGJ]  = -ERECT_TO_SITDOWN_KGJ_ANGLE;
+					ObjetMotorData.MotorAngles[LEFT_XGJ]   = -ERECT_TO_SITDOWN_XGJ_ANGLE;
+					ObjetMotorData.MotorAngles[RIGHT_XGJ]  =  ERECT_TO_SITDOWN_XGJ_ANGLE;
+					//直立到坐下
+					if(LastWalkPhase_g == ERECTED)
+					{
+						ObjetMotorData.MotorRunTimes[LEFT_KGJ] =  ERECT_TO_SITDOWN_KGJ_TIMES;
+						ObjetMotorData.MotorRunTimes[RIGHT_KGJ]=  ERECT_TO_SITDOWN_KGJ_TIMES;
+						ObjetMotorData.MotorRunTimes[LEFT_XGJ] =  ERECT_TO_SITDOWN_XGJ_TIMES;
+						ObjetMotorData.MotorRunTimes[RIGHT_XGJ]=  ERECT_TO_SITDOWN_XGJ_TIMES;
+					}
+					//错误步相到坐下
+					else
+					{
+						for(int i = 0;i<4;i++)
+						{
+							if(fabs(NowMotorData.MotorAngles[i]-ERECT_TO_SITDOWN_KGJ_ANGLE) < 45)
+							{
+								ObjetMotorData.MotorRunTimes[i] =  ERROR_TO_SITDOWN_KGJ_TIMES;
+							}
+							else
+							{
+								ObjetMotorData.MotorRunTimes[i] =  ERROR_TO_SITDOWN_KGJ_BIG_TIMES;
+							}
+						}
+					}
+				break;
+			case CMD_TO_ERECT_1:
+				ObjetMotorData.MotorAngles[LEFT_XGJ]   = -SITDOWN_TO_ERECT_1_XGJ_ANGLE;
+				ObjetMotorData.MotorAngles[RIGHT_XGJ]  =  SITDOWN_TO_ERECT_1_XGJ_ANGLE;
+			
+				ObjetMotorData.MotorRunTimes[LEFT_XGJ] =  SITDOWN_TO_ERECT_1_XGJ_TIMES;
+				ObjetMotorData.MotorRunTimes[RIGHT_XGJ]=  SITDOWN_TO_ERECT_1_XGJ_TIMES;
+				break;
+			case CMD_TO_ERECT_2:
+				ObjetMotorData.MotorAngles[LEFT_KGJ]   =  SITDOWN_TO_ERECT_1_KGJ_ANGLE;
+				ObjetMotorData.MotorAngles[RIGHT_KGJ]  = -SITDOWN_TO_ERECT_1_KGJ_ANGLE;
+				ObjetMotorData.MotorAngles[LEFT_XGJ]   = -SITDOWN_TO_ERECT_XGJ_ANGLE;
+				ObjetMotorData.MotorAngles[RIGHT_XGJ]  =  SITDOWN_TO_ERECT_XGJ_ANGLE;
+			
+				ObjetMotorData.MotorRunTimes[LEFT_KGJ] =  SITDOWN_TO_ERECT_1_KGJ_TIMES;
+				ObjetMotorData.MotorRunTimes[RIGHT_KGJ]=  SITDOWN_TO_ERECT_1_KGJ_TIMES;
+				ObjetMotorData.MotorRunTimes[LEFT_XGJ] =  SITDOWN_TO_ERECT_XGJ_TIMES;
+				ObjetMotorData.MotorRunTimes[RIGHT_XGJ]=  SITDOWN_TO_ERECT_XGJ_TIMES;
+				break;
+			case CMD_TO_ERECT_3:
+				ObjetMotorData.MotorAngles[LEFT_KGJ]   = STEP_FOOT_TO_ERECT_KGJ_1_ANGLE;
+				ObjetMotorData.MotorAngles[LEFT_XGJ]  =  -STEP_FOOT_TO_ERECT_XGJ_1_ANGLE;
+			
+				ObjetMotorData.MotorRunTimes[LEFT_KGJ] =  STEP_FOOT_TO_ERECT_KGJ_TIMES;
+				ObjetMotorData.MotorRunTimes[LEFT_XGJ] =  STEP_FOOT_TO_ERECT_XGJ_TIMES;
+				break;
+			case CMD_TO_ERECT_4:
+				ObjetMotorData.MotorAngles[RIGHT_KGJ]   = -STEP_FOOT_TO_ERECT_KGJ_1_ANGLE;
+				ObjetMotorData.MotorAngles[RIGHT_XGJ]  =  STEP_FOOT_TO_ERECT_XGJ_1_ANGLE;
+			
+				ObjetMotorData.MotorRunTimes[RIGHT_KGJ] =  STEP_FOOT_TO_ERECT_KGJ_TIMES;
+				ObjetMotorData.MotorRunTimes[RIGHT_XGJ] =  STEP_FOOT_TO_ERECT_XGJ_TIMES;
+				break;
+			case CMD_TO_ERECT:
+				ObjetMotorData.MotorAngles[LEFT_KGJ]   =  SITDOWN_TO_ERECT_KGJ_ANGLE;
+				ObjetMotorData.MotorAngles[RIGHT_KGJ]  = -SITDOWN_TO_ERECT_KGJ_ANGLE;
+				//坐下到直立
+				if(LastWalkPhase_g == SITDOWNED)
+				{
+					ObjetMotorData.MotorRunTimes[LEFT_KGJ] =  SITDOWN_TO_ERECT_KGJ_TIMES;
+					ObjetMotorData.MotorRunTimes[RIGHT_KGJ]=  SITDOWN_TO_ERECT_KGJ_TIMES;
+				}
+				//从错误步相到直立
+				else if(LastWalkPhase_g == ERROR_WALK_PHASE) 
+				{
+					ObjetMotorData.MotorAngles[LEFT_XGJ]   = -SITDOWN_TO_ERECT_XGJ_ANGLE;
+					ObjetMotorData.MotorAngles[RIGHT_XGJ]  =  SITDOWN_TO_ERECT_XGJ_ANGLE;
+					for(int i = 0; i<4; i++)
+					{
+						if(fabs(NowMotorData.MotorAngles[i]-SITDOWN_TO_ERECT_XGJ_ANGLE) < 45)
+						{
+							ObjetMotorData.MotorRunTimes[i] =  ERROR_TO_ERECT_KGJ_TIMES;
+						}
+						else
+						{
+							ObjetMotorData.MotorRunTimes[i] =  ERROR_TO_ERECT_KGJ_BIG_TIMES;
+						}
+					}
+				}
+				//迈腿步相到直立
+				else
+				{
+					ObjetMotorData.MotorAngles[LEFT_XGJ]   = -SITDOWN_TO_ERECT_XGJ_ANGLE;
+					ObjetMotorData.MotorAngles[RIGHT_XGJ]  =  SITDOWN_TO_ERECT_XGJ_ANGLE;
+					
+					ObjetMotorData.MotorRunTimes[LEFT_KGJ] =  ERROR_TO_ERECT_KGJ_TIMES;
+					ObjetMotorData.MotorRunTimes[RIGHT_KGJ]=  ERROR_TO_ERECT_KGJ_TIMES;
+					ObjetMotorData.MotorRunTimes[LEFT_XGJ] =  ERROR_TO_ERECT_XGJ_TIMES;
+					ObjetMotorData.MotorRunTimes[RIGHT_XGJ]=  ERROR_TO_ERECT_XGJ_TIMES;
+				}
 				break;
 			default:
 				break;
@@ -539,7 +629,7 @@ void GetMotorObjectAngleAndSpeed(void)
 //将外部控制指令转换为内部控制指令
 void TransExternalCmdToInternalCmd(void)
 {
-    if( NowWalkPhase_g == MOVING  ) 
+    if( NowWalkPhase_g == MOVING || CmdFalg != CMD_NULL) 
 	{
 		SetExternalCtrlCmd( TO_KEEP );
 		return;
@@ -704,55 +794,58 @@ void UpLoadAppDataPro(void)
 	//左腿电机数据
 //	printf("\nLeft Motor Data:\n");
 	UploadMotorDataLeft[0] = 0x68;
-	UploadMotorDataLeft[1] = 0x0A;
-	UploadMotorDataLeft[2] = CanMotorAngles[LEFT_KGJ].Data[0];//NowMotorData.MotorAngles[LEFT_KGJ];
-	UploadMotorDataLeft[3] = CanMotorAngles[LEFT_KGJ].Data[1];//NowMotorData.MotorAngles[LEFT_XGJ];
-	UploadMotorDataLeft[4] = CanMotorAngles[LEFT_XGJ].Data[0];
-	UploadMotorDataLeft[5] = CanMotorAngles[LEFT_XGJ].Data[1];
-	UploadMotorDataLeft[6] = 0x00;  //力矩
-	UploadMotorDataLeft[7] = 0x00;
-	UploadMotorDataLeft[8] = 0xD0;  //温度
-	UploadMotorDataLeft[9] = 0x07;
-	UploadMotorDataLeft[10] = CanMotorAngles[LEFT_KGJ].Data[6];  //故障码
-	UploadMotorDataLeft[11] = CanMotorAngles[LEFT_XGJ].Data[6];
-	UploadMotorDataLeft[12] = 0x16;
-	HAL_UART_Transmit(&huart4,UploadMotorDataLeft,13,1000);
+	UploadMotorDataLeft[1] = 0x0E;
+	UploadMotorDataLeft[2] = 0xAA;
+	UploadMotorDataLeft[3] = CanMotorAngles[LEFT_KGJ].Data[0];//NowMotorData.MotorAngles[LEFT_KGJ];
+	UploadMotorDataLeft[4] = CanMotorAngles[LEFT_KGJ].Data[1];//NowMotorData.MotorAngles[LEFT_XGJ];
+	UploadMotorDataLeft[5] = CanMotorAngles[LEFT_XGJ].Data[0];
+	UploadMotorDataLeft[6] = CanMotorAngles[LEFT_XGJ].Data[1];
+	UploadMotorDataLeft[7] = 0x00;  //力矩
+	UploadMotorDataLeft[8] = 0x00;
+	UploadMotorDataLeft[9] = 0xD0;  //温度
+	UploadMotorDataLeft[10] = 0x07;
+	UploadMotorDataLeft[11] = CanMotorAngles[LEFT_KGJ].Data[6];  //故障码
+	UploadMotorDataLeft[12] = CanMotorAngles[LEFT_XGJ].Data[6];
+	UploadMotorDataLeft[13] = 0x16;
+	HAL_UART_Transmit(&huart4,UploadMotorDataLeft,14,1000);
 
 
 	//printf("\nRight Motor Data:\n");
 	//右腿电机数据
 	UploadMotorDataRight[0] = 0x68;
-	UploadMotorDataRight[1] = 0x0A;
-	UploadMotorDataRight[2] = CanMotorAngles[RIGHT_KGJ].Data[0];//0xd8; //KGJ角度  -90°
-	UploadMotorDataRight[3] = CanMotorAngles[RIGHT_KGJ].Data[1];
-	UploadMotorDataRight[4] = CanMotorAngles[RIGHT_XGJ].Data[0]; //XGJ角度  90°
-	UploadMotorDataRight[5] = CanMotorAngles[RIGHT_XGJ].Data[1];
-	UploadMotorDataRight[6] = 0x00; //力矩     0
-	UploadMotorDataRight[7] = 0x00;
-	UploadMotorDataRight[8] = 0xD0; //温度     20℃
-	UploadMotorDataRight[9] = 0x07;
-	UploadMotorDataRight[10] = CanMotorAngles[RIGHT_XGJ].Data[6];
-	UploadMotorDataRight[11] = CanMotorAngles[RIGHT_XGJ].Data[6]; 
-	UploadMotorDataRight[12] = 0x16;
-	HAL_UART_Transmit(&huart4,UploadMotorDataRight,13,1000);
+	UploadMotorDataRight[1] = 0x0E;
+	UploadMotorDataRight[2] = 0xBB;
+	UploadMotorDataRight[3] = CanMotorAngles[RIGHT_KGJ].Data[0];//0xd8; //KGJ角度  -90°
+	UploadMotorDataRight[4] = CanMotorAngles[RIGHT_KGJ].Data[1];
+	UploadMotorDataRight[5] = CanMotorAngles[RIGHT_XGJ].Data[0]; //XGJ角度  90°
+	UploadMotorDataRight[6] = CanMotorAngles[RIGHT_XGJ].Data[1];
+	UploadMotorDataRight[7] = 0x00; //力矩     0
+	UploadMotorDataRight[8] = 0x00;
+	UploadMotorDataRight[9] = 0xD0; //温度     20℃
+	UploadMotorDataRight[10] = 0x07;
+	UploadMotorDataRight[11] = CanMotorAngles[RIGHT_XGJ].Data[6];
+	UploadMotorDataRight[12] = CanMotorAngles[RIGHT_XGJ].Data[6]; 
+	UploadMotorDataRight[13] = 0x16;
+	HAL_UART_Transmit(&huart4,UploadMotorDataRight,14,1000);
 
 	//电池数据
 //	printf("\nCell Data:\n");
 	UploadCellData[0] = 0x68;
-	UploadCellData[1] = 0x0C;
-	UploadCellData[2] = 0x10;  //电量
-	UploadCellData[3] = 0x27;
-	UploadCellData[4] = 0x10;  //电压
-	UploadCellData[5] = 0x0E;
-	UploadCellData[6] = 0xF4;  //电流
-	UploadCellData[7] = 0x01;
-	UploadCellData[8] = 0xD0;  //温度
-	UploadCellData[9] = 0x07;
-	UploadCellData[10] = 0x00;
-	UploadCellData[11] = 0xFF;
-	UploadCellData[12] = 0x16;
+	UploadCellData[1] = 0x0E;
+	UploadCellData[2] = 0xCC;
+	UploadCellData[3] = 0x10;  //电量
+	UploadCellData[4] = 0x27;
+	UploadCellData[5] = 0x10;  //电压
+	UploadCellData[6] = 0x0E;
+	UploadCellData[7] = 0xF4;  //电流
+	UploadCellData[8] = 0x01;
+	UploadCellData[9] = 0xD0;  //温度
+	UploadCellData[10] = 0x07;
+	UploadCellData[11] = 0x00;
+	UploadCellData[12] = 0xFF;
+	UploadCellData[13] = 0x16;
 	
-	HAL_UART_Transmit(&huart4,UploadCellData,13,1000);
+	HAL_UART_Transmit(&huart4,UploadCellData,14,1000);
 
 }
 
@@ -916,14 +1009,93 @@ void GetBatteryVoltage(void)
 void CompareTargetAngle(void)
 {
 	int MotorIndex = 0;
+	static int times = 0;
 	for(MotorIndex = LEFT_KGJ; MotorIndex <= RIGHT_XGJ ; MotorIndex++)
 	{
 		if(NowMotorData.MotorSynAngle[MotorIndex] != ObjetMotorData.MotorAngles[MotorIndex])
 		{
-			printf("asdddddddddddddddddddddddddddddddddddddddddd\n");
+			times++;
+			if(times >= 5)
+			{
+				taskENTER_CRITICAL();           //进入临界区
+				OldCmd = 0xff;
+				GetMotorObjectAngleAndSpeed();
+				for(int i = 0; i<4; i++)
+				{
+					if(i != MotorIndex)
+					{
+						ObjetMotorData.MotorRunTimes[i] = 0;
+					}
+				}
+				CtrlMotor();
+				taskEXIT_CRITICAL();            //退出临界区
+				times = 0;
+			}
+			
 		}
 	}
 }
+//void CANDataRxPro(void)
+//{
+//	uint8_t RxData[8] = {0};
+//	CAN_RxHeaderTypeDef	RxHeader = {0};	
+//	HAL_CAN_GetRxMessage(&hcan1, CAN_FILTER_FIFO0, &RxHeader, RxData);
+//	switch(RxHeader.StdId)
+//	{                                 
+//		case 0x302:
+//			CanMotorAngles[LEFT_KGJ].Id = RxHeader.StdId;
+//			CanMotorAngles[LEFT_KGJ].Len = RxHeader.DLC;
+//			memcpy(CanMotorAngles[LEFT_KGJ].Data,RxData,RxHeader.DLC);
+//			CanMotorAngles[LEFT_KGJ].SpaceTimes = 0;
+//			break;
+//		case 0x303:
+//			CanMotorAngles[LEFT_XGJ].Id = RxHeader.StdId;
+//			CanMotorAngles[LEFT_XGJ].Len = RxHeader.DLC;
+//			memcpy(CanMotorAngles[LEFT_XGJ].Data,RxData,RxHeader.DLC);
+//			CanMotorAngles[LEFT_XGJ].SpaceTimes = 0;
+//			break;				
+//		case 0x304:
+//			CanMotorAngles[RIGHT_KGJ].Id = RxHeader.StdId;
+//			CanMotorAngles[RIGHT_KGJ].Len = RxHeader.DLC;
+//			memcpy(CanMotorAngles[RIGHT_KGJ].Data,RxData,RxHeader.DLC);
+//			CanMotorAngles[RIGHT_KGJ].SpaceTimes = 0;
+//			break;				
+//		case 0x305:
+//			CanMotorAngles[RIGHT_XGJ].Id = RxHeader.StdId;
+//			CanMotorAngles[RIGHT_XGJ].Len = RxHeader.DLC;
+//			memcpy(CanMotorAngles[RIGHT_XGJ].Data,RxData,RxHeader.DLC);
+//			CanMotorAngles[RIGHT_XGJ].SpaceTimes = 0;
+//			break;
+//		/*****-----------*****/
+//		case 0x402:
+//			CanMotorAngles[LEFT_KGJ].Id = RxHeader.StdId;
+//			CanMotorAngles[LEFT_KGJ].Len = RxHeader.DLC;
+//			memcpy(CanMotorAngles[LEFT_KGJ].Data,RxData,RxHeader.DLC);
+//			CanMotorAngles[LEFT_KGJ].SpaceTimes = 0;
+//			break;
+//		case 0x403:
+//			CanMotorAngles[LEFT_XGJ].Id = RxHeader.StdId;
+//			CanMotorAngles[LEFT_XGJ].Len = RxHeader.DLC;
+//			memcpy(CanMotorAngles[LEFT_XGJ].Data,RxData,RxHeader.DLC);
+//			CanMotorAngles[LEFT_XGJ].SpaceTimes = 0;
+//			break;
+//		case 0x404:
+//			CanMotorAngles[RIGHT_KGJ].Id = RxHeader.StdId;
+//			CanMotorAngles[RIGHT_KGJ].Len = RxHeader.DLC;
+//			memcpy(CanMotorAngles[RIGHT_KGJ].Data,RxData,RxHeader.DLC);
+//			CanMotorAngles[RIGHT_KGJ].SpaceTimes = 0;
+//			break;
+//		case 0x405:
+//			CanMotorAngles[RIGHT_XGJ].Id = RxHeader.StdId;
+//			CanMotorAngles[RIGHT_XGJ].Len = RxHeader.DLC;
+//			memcpy(CanMotorAngles[RIGHT_XGJ].Data,RxData,RxHeader.DLC);
+//			CanMotorAngles[RIGHT_XGJ].SpaceTimes = 0;
+//			break;
+//		default :
+//			break ;
+//	}
+//	HAL_CAN_ActivateNotification(&hcan1, CAN_IT_RX_FIFO0_MSG_PENDING);
+//}
 void SetExternalCtrlCmd( CTRL_CMD_ENUM Cmd )
 {
     ExternalCtrlCmd_g.Cmd = Cmd;

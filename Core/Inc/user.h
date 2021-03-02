@@ -29,8 +29,8 @@
 #define MotorBackDataScale 100
 
 /*角度、速度阈值配置*/
-#define SPEED_EPS 8.0
-#define ANGLE_EPS 5.0
+//#define SPEED_EPS 1.0
+//#define ANGLE_EPS 2.0
 
 /*************************************************
 ----------------------------------
@@ -55,17 +55,19 @@
 /**************角度****************/
 #define SITDOWN_TO_ERECT_KGJ_ANGLE 0
 #define SITDOWN_TO_ERECT_XGJ_ANGLE 0
-#define SITDOWN_TO_ERECT_1_KGJ_ANGLE 105		
+#define SITDOWN_TO_ERECT_1_KGJ_ANGLE 100		
 #define SITDOWN_TO_ERECT_1_XGJ_ANGLE 105 
 /**************时间****************/
-#define SITDOWN_TO_ERECT_KGJ_TIMES 6.0
-#define SITDOWN_TO_ERECT_XGJ_TIMES 5.5
-#define SITDOWN_TO_ERECT_1_KGJ_TIMES 2		
-#define SITDOWN_TO_ERECT_1_XGJ_TIMES 2
+#define SITDOWN_TO_ERECT_KGJ_TIMES 5.5
+#define SITDOWN_TO_ERECT_XGJ_TIMES 6.5
+#define SITDOWN_TO_ERECT_1_KGJ_TIMES 1.5		
+#define SITDOWN_TO_ERECT_1_XGJ_TIMES 2.0
 
 #define ERROR_TO_ERECT_KGJ_TIMES 2.0
 #define ERROR_TO_ERECT_XGJ_TIMES 2.0
 
+#define ERROR_TO_ERECT_KGJ_BIG_TIMES 4.0
+#define ERROR_TO_ERECT_XGJ_BIG_TIMES 4.0
 /*
 -----------直立到坐下
 */
@@ -79,27 +81,36 @@
 
 #define ERROR_TO_SITDOWN_KGJ_TIMES 2.0
 #define ERROR_TO_SITDOWN_XGJ_TIMES 2.0
+#define ERROR_TO_SITDOWN_KGJ_BIG_TIMES 4.0
+#define ERROR_TO_SITDOWN_XGJ_BIG_TIMES 4.0
 /*
 -----------WALK
 */
 /**************角度****************/
-#define STEP_FOOT_KGJ_ANGLE 20
+#define STEP_FOOT_KGJ_ANGLE 18
 #define STEP_FOOT_XGJ_ANGLE 10
 #define STEP_FOOT_1_KGJ_ANGLE 45
 #define STEP_FOOT_1_XGJ_ANGLE 60
 #define STEP_FOOT_TO_ERECT_KGJ_ANGLE 0
 #define STEP_FOOT_TO_ERECT_XGJ_ANGLE 0
+#define STEP_FOOT_TO_ERECT_KGJ_1_ANGLE 30
+#define STEP_FOOT_TO_ERECT_XGJ_1_ANGLE 50
+#define STEP_FOOT_KB_KGJ_ANGLE 5
 /**************时间****************/
-#define STEP_FOOT_KGJ_TIMES 2
-#define STEP_FOOT_XGJ_TIMES 2.5
-#define STEP_FOOT_1_KGJ_TIMES 2.5
-#define STEP_FOOT_1_XGJ_TIMES 2
+
+//#define STEP_FOOT_KGJ_TIMES 1.4
+//#define STEP_FOOT_XGJ_TIMES 1.7
+//#define STEP_FOOT_1_KGJ_TIMES 1.7
+//#define STEP_FOOT_1_XGJ_TIMES 1.3
 #define STEP_FOOT_TO_ERECT_KGJ_TIMES 1.5
 #define STEP_FOOT_TO_ERECT_XGJ_TIMES 1.5
 /*命令宏*/
 #define CMD_NULL                 0xFF
 #define CMD_TO_SITDOWN 	         0x10
 #define CMD_TO_ERECT_1           0x11
+#define CMD_TO_ERECT_2           0x12
+#define CMD_TO_ERECT_3           0x13		//迈左腿到直立
+#define CMD_TO_ERECT_4           0x14		//迈右腿到直立
 #define CMD_TO_ERECT             0x20
 #define CMD_TO_STEP_LEFT_FOOT    0x30
 #define CMD_TO_STEP_LEFT_FOOT_1  0x31
@@ -260,7 +271,7 @@ extern uint32_t ReadFlashBuffer[WRITE_FLASH_DATA_SIZE] ;
 extern EventGroupHandle_t EventGroupHandler;	//事件标志组句柄
 extern QueueHandle_t Usart3RxBuffQueue;         //串口消息队列
 extern QueueHandle_t Usart4RxBuffQueue;         //串口消息队列
-
+extern SemaphoreHandle_t BinarySemaphore;	   
 void inituser(void);
 void SetExternalCtrlCmd( CTRL_CMD_ENUM Cmd );
 void UserInit( void );
@@ -273,5 +284,6 @@ void GetAllMotorState(void);
 void CompareTargetAngle(void);
 void UpLoadAppDataPro(void);
 void GetBatteryVoltage(void);
+
 STATUS_ENUM CheckStatus(void); //自检状态;
 #endif
