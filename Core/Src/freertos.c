@@ -30,7 +30,7 @@
 #include "stick.h"
 #include "task.h"
 /* USER CODE END Includes */
-char InfoBuffer[500];				//保存信息的数组
+
 /* Private typedef -----------------------------------------------------------*/
 /* USER CODE BEGIN PTD */
 
@@ -45,7 +45,7 @@ char InfoBuffer[500];				//保存信息的数组
 /* USER CODE BEGIN PM */
 QueueHandle_t Usart3RxBuffQueue;         //串口消息队列
 QueueHandle_t Usart4RxBuffQueue;         //串口消息队列
-SemaphoreHandle_t BinarySemaphore;	         //二值信号量句柄
+//SemaphoreHandle_t BinarySemaphore;	         //二值信号量句柄
 EventGroupHandle_t EventGroupHandler;	   //事件标志组句柄
 /* USER CODE END PM */
 
@@ -120,12 +120,12 @@ void MX_FREERTOS_Init(void) {
 	Usart3RxBuffQueue = xQueueCreate(1,UART3_RX_BUFFER_SIZE);  //创建消息串口3Buffer,队列项长度是串口接收缓冲区长度
 	Usart4RxBuffQueue = xQueueCreate(1,UART4_RX_BUFFER_SIZE);  //创建消息串口3Buffer,队列项长度是串口接收缓冲区长度
 	EventGroupHandler = xEventGroupCreate();	 //创建事件标志组
-	BinarySemaphore   = xSemaphoreCreateBinary();
+	//BinarySemaphore   = xSemaphoreCreateBinary();
   /* USER CODE END RTOS_QUEUES */
 
   /* Create the thread(s) */
   /* definition and creation of CanTxDataTask */
-  osThreadDef(CanTxDataTask, CanTxDataPro, osPriorityBelowNormal, 0, 256);
+  osThreadDef(CanTxDataTask, CanTxDataPro, osPriorityAboveNormal, 0, 256);
   CanTxDataTaskHandle = osThreadCreate(osThread(CanTxDataTask), NULL);
 
   /* definition and creation of UartDataProTask */
@@ -137,7 +137,7 @@ void MX_FREERTOS_Init(void) {
   CanDataProTaskHandle = osThreadCreate(osThread(CanDataProTask), NULL);
 
   /* definition and creation of GetVoltageTask */
-  osThreadDef(GetVoltageTask, GetVoltagePro, osPriorityLow, 0, 1280);
+  osThreadDef(GetVoltageTask, GetVoltagePro, osPriorityLow, 0, 128);
   GetVoltageTaskHandle = osThreadCreate(osThread(GetVoltageTask), NULL);
 
   /* definition and creation of KeyScanTask */
@@ -165,18 +165,19 @@ void MX_FREERTOS_Init(void) {
   * @retval None
   */
 /* USER CODE END Header_CanTxDataPro */
-void CanTxDataPro(void const * argument)           //发送CAN数据任务
+void CanTxDataPro(void const * argument)
 {
   /* USER CODE BEGIN CanTxDataPro */
   /* Infinite loop */
   for(;;)
   {
-	taskENTER_CRITICAL();           //进入临界区
+	
 	TransExternalCmdToInternalCmd();
 	GetMotorObjectAngleAndSpeed();
+	taskENTER_CRITICAL();           //进入临界区
 	CtrlMotor();
 	taskEXIT_CRITICAL();            //退出临界区
-    osDelay(10);
+    osDelay(1);
   }
   /* USER CODE END CanTxDataPro */
 }
@@ -188,7 +189,7 @@ void CanTxDataPro(void const * argument)           //发送CAN数据任务
 * @retval None
 */
 /* USER CODE END Header_UartDataPro */
-void UartDataPro(void const * argument)            //串口数据处理任务
+void UartDataPro(void const * argument)
 {
   /* USER CODE BEGIN UartDataPro */
 	uint8_t Uart3Data[UART3_RX_BUFFER_SIZE] = {0};
@@ -222,24 +223,15 @@ void UartDataPro(void const * argument)            //串口数据处理任务
 * @retval None
 */
 /* USER CODE END Header_CanDataPro */
-void CanDataPro(void const * argument)           //电机数据处理任务
+void CanDataPro(void const * argument)
 {
   /* USER CODE BEGIN CanDataPro */
   /* Infinite loop */
-  BaseType_t err=pdFALSE;
   for(;;)
   {
-	if(BinarySemaphore!=NULL)
-	{	  
-		err=xSemaphoreTake(BinarySemaphore,portMAX_DELAY);	//获取信号量
-		if(err==pdTRUE)										//获取信号量成功
-		{
-			GetAllMotorState();
-			GetWalkPhase();
-			
-		}
-	}
-	
+	GetAllMotorState();
+	GetWalkPhase();
+	osDelay(1);
   }
   /* USER CODE END CanDataPro */
 }
@@ -257,10 +249,10 @@ void GetVoltagePro(void const * argument)
   /* Infinite loop */
   for(;;)
   {
-	 CompareTargetAngle();
+	
 	//GetBatteryVoltage();
 	HAL_GPIO_TogglePin(GPIOB,GPIO_PIN_1);HAL_GPIO_TogglePin(GPIOB,GPIO_PIN_2);HAL_GPIO_TogglePin(GPIOE,GPIO_PIN_5);
-    osDelay(20);
+    osDelay(500);
   }
   /* USER CODE END GetVoltagePro */
 }

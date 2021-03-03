@@ -30,8 +30,8 @@ void KeyTypeJudge(void)
 		//右边长按
 		if(KeyStatus[RIGHT_DOWN].KeyDownLastTime_ms>2000)
 		{
-			//SetExternalCtrlCmd( TO_TURN );
-			//printf("\nControl commnad is to turn round\n");
+			SetExternalCtrlCmd( TO_TURN );
+			printf("\nControl commnad is to turn round\n");
 			//xEventGroupSetBits(EventGroupHandler,EVENTBIT_0);        //处理完信息后标志事件	
 			KeyStatus[RIGHT_DOWN].OutTimeFlag = 1;
 			KeyStatus[RIGHT_DOWN].KeyDownLastTime_ms= 0;

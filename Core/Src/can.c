@@ -172,7 +172,6 @@ void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *hcan)
 	uint8_t RxData[8] = {0};
 	CAN_RxHeaderTypeDef	RxHeader = {0};
 	CanStartRxFlag = 1;
-	BaseType_t xHigherPriorityTaskWoken;
 	if(hcan->Instance == CAN1)
 	{		
 		HAL_CAN_GetRxMessage(&hcan1, CAN_FILTER_FIFO0, &RxHeader, RxData);
@@ -230,12 +229,6 @@ void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *hcan)
 				break ;
 		}
 		HAL_CAN_ActivateNotification(&hcan1, CAN_IT_RX_FIFO0_MSG_PENDING);
-		if(BinarySemaphore!=NULL)
-		{
-			xSemaphoreGiveFromISR(BinarySemaphore,&xHigherPriorityTaskWoken);	//释放二值信号量
-			portYIELD_FROM_ISR(xHigherPriorityTaskWoken);//如果需要的话进行一次任务切换
-			
-		}
 	}
 }
 /* USER CODE END 1 */

@@ -37,17 +37,17 @@
         步相关节角度宏配置
 ----------------------------------
 **************************************************/
-#define INIT_MAX_ANGLE_OF_KGJ 90
-#define INIT_MAX_ANGLE_OF_XGJ 90
-#define INIT_MAX_ANGLE_OF_WALK_KGJ 40       //行走时髋关节关节默认最大角度
-#define INIT_MAX_ANGLE_OF_WALK_XGJ 60       //行走时膝关节默认最大角度
-#define INIT_MAX_ANGLE_OF_WALK_KB 20        //跨步髋关节角度
-#define INIT_MAX_ANGLE_OF_ERECTED 0         //直立角度
-#define INIT_MAX_ANGLE_OF_KGJ_FORWARD 105		//起立时髋关节运动角度
-#define INIT_MAX_ANGLE_OF_XGJ_FORWARD 105 	//起立时膝关节运动角度
-#define INIT_MAX_ANGLE_OF_LAY_XGJ  10       //行走放腿时膝关节角度
-#define ININT_ANGLE_LAY_TO_ERECTED_KGJ  30
-#define ININT_ANGLE_LAY_TO_ERECTED_XGJ  50
+//#define INIT_MAX_ANGLE_OF_KGJ 90
+//#define INIT_MAX_ANGLE_OF_XGJ 90
+//#define INIT_MAX_ANGLE_OF_WALK_KGJ 35      //行走时髋关节关节默认最大角度
+//#define INIT_MAX_ANGLE_OF_WALK_XGJ 60       //行走时膝关节默认最大角度
+//#define INIT_MAX_ANGLE_OF_WALK_KB 20        //跨步髋关节角度
+//#define INIT_MAX_ANGLE_OF_ERECTED 0         //直立角度
+//#define INIT_MAX_ANGLE_OF_KGJ_FORWARD 105		//起立时髋关节运动角度
+//#define INIT_MAX_ANGLE_OF_XGJ_FORWARD 105 	//起立时膝关节运动角度
+//#define INIT_MAX_ANGLE_OF_LAY_XGJ  10       //行走放腿时膝关节角度
+//#define ININT_ANGLE_LAY_TO_ERECTED_KGJ  30
+//#define ININT_ANGLE_LAY_TO_ERECTED_XGJ  50
 
 /*
 -----------坐下到直立
@@ -55,7 +55,7 @@
 /**************角度****************/
 #define SITDOWN_TO_ERECT_KGJ_ANGLE 0
 #define SITDOWN_TO_ERECT_XGJ_ANGLE 0
-#define SITDOWN_TO_ERECT_1_KGJ_ANGLE 100		
+#define SITDOWN_TO_ERECT_1_KGJ_ANGLE 105		
 #define SITDOWN_TO_ERECT_1_XGJ_ANGLE 105 
 /**************时间****************/
 #define SITDOWN_TO_ERECT_KGJ_TIMES 5.5
@@ -75,9 +75,14 @@
 #define ERECT_TO_SITDOWN_KGJ_ANGLE 90
 #define ERECT_TO_SITDOWN_XGJ_ANGLE 90
 
+#define ERECT_TO_SITDOWN_1_KGJ_ANGLE 30
+//#define ERECT_TO_SITDOWN_1_XGJ_ANGLE 90
 /**************时间****************/
 #define ERECT_TO_SITDOWN_KGJ_TIMES 5.5
-#define ERECT_TO_SITDOWN_XGJ_TIMES 6.0
+#define ERECT_TO_SITDOWN_XGJ_TIMES 5.5
+
+#define ERECT_TO_SITDOWN_KGJ_1_TIMES 3
+//#define ERECT_TO_SITDOWN_XGJ_1_TIMES 2
 
 #define ERROR_TO_SITDOWN_KGJ_TIMES 2.0
 #define ERROR_TO_SITDOWN_XGJ_TIMES 2.0
@@ -89,8 +94,8 @@
 /**************角度****************/
 #define STEP_FOOT_KGJ_ANGLE 18
 #define STEP_FOOT_XGJ_ANGLE 10
-#define STEP_FOOT_1_KGJ_ANGLE 45
-#define STEP_FOOT_1_XGJ_ANGLE 60
+//#define STEP_FOOT_1_KGJ_ANGLE 40
+//#define STEP_FOOT_1_XGJ_ANGLE 60
 #define STEP_FOOT_TO_ERECT_KGJ_ANGLE 0
 #define STEP_FOOT_TO_ERECT_XGJ_ANGLE 0
 #define STEP_FOOT_TO_ERECT_KGJ_1_ANGLE 30
@@ -104,6 +109,18 @@
 //#define STEP_FOOT_1_XGJ_TIMES 1.3
 #define STEP_FOOT_TO_ERECT_KGJ_TIMES 1.5
 #define STEP_FOOT_TO_ERECT_XGJ_TIMES 1.5
+
+/*
+**********转弯-----	
+*/
+
+#define TURNED_KGJ_ANGLE 25
+#define TURNED_XGJ_ANGLE 30
+
+#define TURNED_KGJ_TIMES 2
+#define TURNED_XGJ_TIMES 2
+
+
 /*命令宏*/
 #define CMD_NULL                 0xFF
 #define CMD_TO_SITDOWN 	         0x10
@@ -111,7 +128,9 @@
 #define CMD_TO_ERECT_2           0x12
 #define CMD_TO_ERECT_3           0x13		//迈左腿到直立
 #define CMD_TO_ERECT_4           0x14		//迈右腿到直立
+#define CMD_TO_ERECT_5           0x15		//迈右腿到直立
 #define CMD_TO_ERECT             0x20
+
 #define CMD_TO_STEP_LEFT_FOOT    0x30
 #define CMD_TO_STEP_LEFT_FOOT_1  0x31
 #define CMD_TO_STEP_LEFT_FOOT_2  0x32
@@ -120,7 +139,7 @@
 #define CMD_TO_STEP_RIGHT_FOOT_1 0x41
 #define CMD_TO_STEP_RIGHT_FOOT_2 0x42
 #define CMD_TO_STEP_RIGHT_FOOT_3 0x43
-
+#define CMD_TO_TURNED            0x50
 
 /*串口缓存BUFF大小*/
 #define UART4_RX_BUFFER_SIZE 12
@@ -164,6 +183,7 @@ typedef enum
 	ERECTED,		//直立
     LEFT_FOOT_STEP,  //迈左腿
     RIGHT_FOOT_STEP, //迈右腿
+	TURNED,  //转弯
     MOVING,
 	KEEPED,
     ERROR_WALK_PHASE,
@@ -178,6 +198,7 @@ typedef enum
     TO_ERECT,
     TO_STEP_LEFT_FOOT,
     TO_STEP_RIGHT_FOOT,
+	TO_TURN,
     MAX_CTRL_CMD,
 }CTRL_CMD_ENUM;        //控制命令枚举
 
@@ -219,6 +240,7 @@ typedef struct
 	STATUS_ENUM NowsystemStauts;
 	STATUS_ENUM AngleStatus;
 	STATUS_ENUM CanStatus ;
+	uint8_t     CanErrorTimes;
 }JointStatus_t;
 
 
@@ -284,6 +306,6 @@ void GetAllMotorState(void);
 void CompareTargetAngle(void);
 void UpLoadAppDataPro(void);
 void GetBatteryVoltage(void);
-
+//void CANDataRxPro(void);
 STATUS_ENUM CheckStatus(void); //自检状态;
 #endif
