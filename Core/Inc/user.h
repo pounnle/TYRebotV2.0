@@ -294,6 +294,7 @@ extern EventGroupHandle_t EventGroupHandler;	//事件标志组句柄
 extern QueueHandle_t Usart3RxBuffQueue;         //串口消息队列
 extern QueueHandle_t Usart4RxBuffQueue;         //串口消息队列
 extern SemaphoreHandle_t BinarySemaphore;	   
+
 void inituser(void);
 void SetExternalCtrlCmd( CTRL_CMD_ENUM Cmd );
 void UserInit( void );
@@ -306,6 +307,6 @@ void GetAllMotorState(void);
 void CompareTargetAngle(void);
 void UpLoadAppDataPro(void);
 void GetBatteryVoltage(void);
-//void CANDataRxPro(void);
+void CANDataRxPro(void);
 STATUS_ENUM CheckStatus(void); //自检状态;
 #endif

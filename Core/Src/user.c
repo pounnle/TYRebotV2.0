@@ -4,16 +4,16 @@
 #include "usart.h"
 #include "flash.h"
 #include "math.h"
-float STEP_FOOT_KGJ_TIMES=2.4;//1.5;//1.3; //1.55  //1 KUAI
-float STEP_FOOT_XGJ_TIMES=3.6;//2.75;//1.7;  //1.95 //1.4
-float STEP_FOOT_1_KGJ_TIMES=4.0;//2.50;//1.7;//1.95 //1.4
-float STEP_FOOT_1_XGJ_TIMES =2.0;//1.25;//1.3;//1.55//1
+float STEP_FOOT_KGJ_TIMES=1.3;//2.4;//1.5;//1.3; //1.55  //1 KUAI
+float STEP_FOOT_XGJ_TIMES=2.0;//3.6;//2.75;//1.7;  //1.95 //1.4
+float STEP_FOOT_1_KGJ_TIMES=2.1;//4.0;//2.50;//1.7;//1.95 //1.4
+float STEP_FOOT_1_XGJ_TIMES =1.3;//;//1.25;//1.3;//1.55//1
 float STEP_FOOT_1_KGJ_ANGLE =40.0;
 float STEP_FOOT_1_XGJ_ANGLE =60;
 float SPEED_EPS =10.0;
 float ANGLE_EPS =4.0;
-//float INIT_MAX_ANGLE_OF_WALK_KGJ=40 ;      //行走时髋关节关节默认最大角度
-int delay_ms = 50;
+
+
 /*全局变量*/
 volatile MotorData_t NowMotorData;
 volatile MotorData_t ObjetMotorData;
@@ -251,7 +251,6 @@ void GetMotorObjectAngleAndSpeed(void)
 							NowMotorData.MotorAngles[LEFT_XGJ] < -(STEP_FOOT_TO_ERECT_XGJ_1_ANGLE - ANGLE_EPS) &&  
 							IsAllMotorStop())
 						{
-							//osDelay(50);
 							CmdFalg = CMD_TO_ERECT;
 						}
 						break;
@@ -274,16 +273,14 @@ void GetMotorObjectAngleAndSpeed(void)
 						CmdFalg = CMD_TO_STEP_RIGHT_FOOT_1;
 						break;
 					case CMD_TO_STEP_RIGHT_FOOT_1:
-						if(NowMotorData.MotorAngles[RIGHT_XGJ] > (STEP_FOOT_1_KGJ_ANGLE - ANGLE_EPS) && NowMotorData.MotorStatus[RIGHT_XGJ] == MOTOR_STOPPING)
+						if(NowMotorData.MotorAngles[RIGHT_XGJ] > (STEP_FOOT_1_XGJ_ANGLE - ANGLE_EPS) && NowMotorData.MotorStatus[RIGHT_XGJ] == MOTOR_STOPPING)
 						{
-							osDelay(delay_ms);
 							CmdFalg = CMD_TO_STEP_RIGHT_FOOT_2;
 						}
 						break;
 					case CMD_TO_STEP_RIGHT_FOOT_2:
 						if(NowMotorData.MotorAngles[RIGHT_KGJ] < -(STEP_FOOT_1_KGJ_ANGLE - ANGLE_EPS) && NowMotorData.MotorStatus[RIGHT_KGJ] == MOTOR_STOPPING)
 						{
-							osDelay(delay_ms);
 							CmdFalg = CMD_TO_STEP_RIGHT_FOOT;
 						}
 					case CMD_TO_STEP_RIGHT_FOOT:
@@ -311,7 +308,6 @@ void GetMotorObjectAngleAndSpeed(void)
 							NowMotorData.MotorAngles[RIGHT_XGJ] > (STEP_FOOT_TO_ERECT_XGJ_1_ANGLE - ANGLE_EPS) &&  
 							IsAllMotorStop())
 						{
-							//osDelay(delay_ms);
 							CmdFalg = CMD_TO_ERECT;
 						}
 						break;
@@ -336,14 +332,12 @@ void GetMotorObjectAngleAndSpeed(void)
 					case CMD_TO_STEP_LEFT_FOOT_1:
 						if( NowMotorData.MotorAngles[LEFT_XGJ] < -(STEP_FOOT_1_XGJ_ANGLE - ANGLE_EPS) && NowMotorData.MotorStatus[LEFT_XGJ] == MOTOR_STOPPING)
 						{
-							osDelay(delay_ms);
 							CmdFalg = CMD_TO_STEP_LEFT_FOOT_2;
 						}
 						break ;
 					case CMD_TO_STEP_LEFT_FOOT_2:
 						if( NowMotorData.MotorAngles[LEFT_KGJ] > (STEP_FOOT_1_KGJ_ANGLE - ANGLE_EPS) &&NowMotorData.MotorStatus[LEFT_KGJ] == MOTOR_STOPPING)
 						{
-							osDelay(delay_ms);
 							CmdFalg = CMD_TO_STEP_LEFT_FOOT;
 						}
 						break ;
@@ -352,7 +346,7 @@ void GetMotorObjectAngleAndSpeed(void)
 						{
 							CmdFalg = CMD_NULL;
 						}
-					break;
+						break;
 					default :
 						break;
 				}				
@@ -496,7 +490,7 @@ void GetMotorObjectAngleAndSpeed(void)
 		default :
 			break;
 	}
-	int MotorIndex = 0;
+//	int MotorIndex = 0;
 	if(OldCmd != CmdFalg)
 	{
 		switch(CmdFalg)
@@ -664,15 +658,15 @@ void GetMotorObjectAngleAndSpeed(void)
 				break;
 		}
 
-		for( MotorIndex=LEFT_KGJ; MotorIndex<=RIGHT_XGJ; MotorIndex++ )
-		{
-			 printf("%s current position angle is %f, object position angle is %f, assigned rotate time is %fs, rotate speed is %f\n",
-					MotorPosStrs[MotorIndex], 
-					NowMotorData.MotorAngles[MotorIndex], 
-					ObjetMotorData.MotorAngles[MotorIndex], 
-					ObjetMotorData.MotorRunTimes[MotorIndex] , 
-					ObjetMotorData.MotorSpeeds[MotorIndex]);
-		}
+//		for( MotorIndex=LEFT_KGJ; MotorIndex<=RIGHT_XGJ; MotorIndex++ )
+//		{
+//			 printf("%s current position angle is %f, object position angle is %f, assigned rotate time is %fs, rotate speed is %f\n",
+//					MotorPosStrs[MotorIndex], 
+//					NowMotorData.MotorAngles[MotorIndex], 
+//					ObjetMotorData.MotorAngles[MotorIndex], 
+//					ObjetMotorData.MotorRunTimes[MotorIndex] , 
+//					ObjetMotorData.MotorSpeeds[MotorIndex]);
+//		}
 		OldCmd = CmdFalg;
 	}
 }
@@ -1097,67 +1091,66 @@ void CompareTargetAngle(void)
 		}
 	}
 }
-//void CANDataRxPro(void)
-//{
-//	uint8_t RxData[8] = {0};
-//	CAN_RxHeaderTypeDef	RxHeader = {0};	
-//	//HAL_CAN_GetRxMessage(&hcan1, CAN_FILTER_FIFO0, &RxHeader, RxData);
-//	switch(RxHeader.StdId)
-//	{                                 
-//		case 0x302:
-//			CanMotorAngles[LEFT_KGJ].Id = RxHeader.StdId;
-//			CanMotorAngles[LEFT_KGJ].Len = RxHeader.DLC;
-//			memcpy(CanMotorAngles[LEFT_KGJ].Data,RxData,RxHeader.DLC);
-//			CanMotorAngles[LEFT_KGJ].SpaceTimes = 0;
-//			break;
-//		case 0x303:
-//			CanMotorAngles[LEFT_XGJ].Id = RxHeader.StdId;
-//			CanMotorAngles[LEFT_XGJ].Len = RxHeader.DLC;
-//			memcpy(CanMotorAngles[LEFT_XGJ].Data,RxData,RxHeader.DLC);
-//			CanMotorAngles[LEFT_XGJ].SpaceTimes = 0;
-//			break;				
-//		case 0x304:
-//			CanMotorAngles[RIGHT_KGJ].Id = RxHeader.StdId;
-//			CanMotorAngles[RIGHT_KGJ].Len = RxHeader.DLC;
-//			memcpy(CanMotorAngles[RIGHT_KGJ].Data,RxData,RxHeader.DLC);
-//			CanMotorAngles[RIGHT_KGJ].SpaceTimes = 0;
-//			break;				
-//		case 0x305:
-//			CanMotorAngles[RIGHT_XGJ].Id = RxHeader.StdId;
-//			CanMotorAngles[RIGHT_XGJ].Len = RxHeader.DLC;
-//			memcpy(CanMotorAngles[RIGHT_XGJ].Data,RxData,RxHeader.DLC);
-//			CanMotorAngles[RIGHT_XGJ].SpaceTimes = 0;
-//			break;
-//		/*****-----------*****/
-//		case 0x402:
-//			CanMotorAngles[LEFT_KGJ].Id = RxHeader.StdId;
-//			CanMotorAngles[LEFT_KGJ].Len = RxHeader.DLC;
-//			memcpy(CanMotorAngles[LEFT_KGJ].Data,RxData,RxHeader.DLC);
-//			CanMotorAngles[LEFT_KGJ].SpaceTimes = 0;
-//			break;
-//		case 0x403:
-//			CanMotorAngles[LEFT_XGJ].Id = RxHeader.StdId;
-//			CanMotorAngles[LEFT_XGJ].Len = RxHeader.DLC;
-//			memcpy(CanMotorAngles[LEFT_XGJ].Data,RxData,RxHeader.DLC);
-//			CanMotorAngles[LEFT_XGJ].SpaceTimes = 0;
-//			break;
-//		case 0x404:
-//			CanMotorAngles[RIGHT_KGJ].Id = RxHeader.StdId;
-//			CanMotorAngles[RIGHT_KGJ].Len = RxHeader.DLC;
-//			memcpy(CanMotorAngles[RIGHT_KGJ].Data,RxData,RxHeader.DLC);
-//			CanMotorAngles[RIGHT_KGJ].SpaceTimes = 0;
-//			break;
-//		case 0x405:
-//			CanMotorAngles[RIGHT_XGJ].Id = RxHeader.StdId;
-//			CanMotorAngles[RIGHT_XGJ].Len = RxHeader.DLC;
-//			memcpy(CanMotorAngles[RIGHT_XGJ].Data,RxData,RxHeader.DLC);
-//			CanMotorAngles[RIGHT_XGJ].SpaceTimes = 0;
-//			break;
-//		default :
-//			break ;
-//	}
-//	HAL_CAN_ActivateNotification(&hcan1, CAN_IT_RX_FIFO0_MSG_PENDING);
-//}
+extern uint8_t RxData[8];
+extern CAN_RxHeaderTypeDef	RxHeader;
+void CANDataRxPro(void)
+{
+	switch(RxHeader.StdId)
+	{                                 
+		case 0x302:
+			CanMotorAngles[LEFT_KGJ].Id = RxHeader.StdId;
+			CanMotorAngles[LEFT_KGJ].Len = RxHeader.DLC;
+			memcpy(CanMotorAngles[LEFT_KGJ].Data,RxData,RxHeader.DLC);
+			CanMotorAngles[LEFT_KGJ].SpaceTimes = 0;
+			break;
+		case 0x303:
+			CanMotorAngles[LEFT_XGJ].Id = RxHeader.StdId;
+			CanMotorAngles[LEFT_XGJ].Len = RxHeader.DLC;
+			memcpy(CanMotorAngles[LEFT_XGJ].Data,RxData,RxHeader.DLC);
+			CanMotorAngles[LEFT_XGJ].SpaceTimes = 0;
+			break;				
+		case 0x304:
+			CanMotorAngles[RIGHT_KGJ].Id = RxHeader.StdId;
+			CanMotorAngles[RIGHT_KGJ].Len = RxHeader.DLC;
+			memcpy(CanMotorAngles[RIGHT_KGJ].Data,RxData,RxHeader.DLC);
+			CanMotorAngles[RIGHT_KGJ].SpaceTimes = 0;
+			break;				
+		case 0x305:
+			CanMotorAngles[RIGHT_XGJ].Id = RxHeader.StdId;
+			CanMotorAngles[RIGHT_XGJ].Len = RxHeader.DLC;
+			memcpy(CanMotorAngles[RIGHT_XGJ].Data,RxData,RxHeader.DLC);
+			CanMotorAngles[RIGHT_XGJ].SpaceTimes = 0;
+			break;
+		/*****-----------*****/
+		case 0x402:
+			CanMotorAngles[LEFT_KGJ].Id = RxHeader.StdId;
+			CanMotorAngles[LEFT_KGJ].Len = RxHeader.DLC;
+			memcpy(CanMotorAngles[LEFT_KGJ].Data,RxData,RxHeader.DLC);
+			CanMotorAngles[LEFT_KGJ].SpaceTimes = 0;
+			break;
+		case 0x403:
+			CanMotorAngles[LEFT_XGJ].Id = RxHeader.StdId;
+			CanMotorAngles[LEFT_XGJ].Len = RxHeader.DLC;
+			memcpy(CanMotorAngles[LEFT_XGJ].Data,RxData,RxHeader.DLC);
+			CanMotorAngles[LEFT_XGJ].SpaceTimes = 0;
+			break;
+		case 0x404:
+			CanMotorAngles[RIGHT_KGJ].Id = RxHeader.StdId;
+			CanMotorAngles[RIGHT_KGJ].Len = RxHeader.DLC;
+			memcpy(CanMotorAngles[RIGHT_KGJ].Data,RxData,RxHeader.DLC);
+			CanMotorAngles[RIGHT_KGJ].SpaceTimes = 0;
+			break;
+		case 0x405:
+			CanMotorAngles[RIGHT_XGJ].Id = RxHeader.StdId;
+			CanMotorAngles[RIGHT_XGJ].Len = RxHeader.DLC;
+			memcpy(CanMotorAngles[RIGHT_XGJ].Data,RxData,RxHeader.DLC);
+			CanMotorAngles[RIGHT_XGJ].SpaceTimes = 0;
+			break;
+		default :
+			break ;
+	}
+	HAL_CAN_ActivateNotification(&hcan1, CAN_IT_RX_FIFO0_MSG_PENDING);
+}
 void SetExternalCtrlCmd( CTRL_CMD_ENUM Cmd )
 {
     ExternalCtrlCmd_g.Cmd = Cmd;

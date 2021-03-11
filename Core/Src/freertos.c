@@ -45,7 +45,7 @@
 /* USER CODE BEGIN PM */
 QueueHandle_t Usart3RxBuffQueue;         //串口消息队列
 QueueHandle_t Usart4RxBuffQueue;         //串口消息队列
-//SemaphoreHandle_t BinarySemaphore;	         //二值信号量句柄
+SemaphoreHandle_t BinarySemaphore;	         //二值信号量句柄
 EventGroupHandle_t EventGroupHandler;	   //事件标志组句柄
 /* USER CODE END PM */
 
@@ -120,7 +120,7 @@ void MX_FREERTOS_Init(void) {
 	Usart3RxBuffQueue = xQueueCreate(1,UART3_RX_BUFFER_SIZE);  //创建消息串口3Buffer,队列项长度是串口接收缓冲区长度
 	Usart4RxBuffQueue = xQueueCreate(1,UART4_RX_BUFFER_SIZE);  //创建消息串口3Buffer,队列项长度是串口接收缓冲区长度
 	EventGroupHandler = xEventGroupCreate();	 //创建事件标志组
-	//BinarySemaphore   = xSemaphoreCreateBinary();
+	BinarySemaphore   = xSemaphoreCreateBinary();
   /* USER CODE END RTOS_QUEUES */
 
   /* Create the thread(s) */
@@ -227,11 +227,23 @@ void CanDataPro(void const * argument)
 {
   /* USER CODE BEGIN CanDataPro */
   /* Infinite loop */
+  BaseType_t err=pdFALSE;
   for(;;)
   {
-	GetAllMotorState();
-	GetWalkPhase();
-	osDelay(1);
+	  if(BinarySemaphore!=NULL)
+	  {
+		err=xSemaphoreTake(BinarySemaphore,10);	//获取信号量
+		if(err==pdTRUE)										//获取信号量成功
+		{
+			CANDataRxPro();
+			GetAllMotorState();
+			GetWalkPhase();
+		}
+	  }
+	  else
+	  {
+		 osDelay(1);
+	  }
   }
   /* USER CODE END CanDataPro */
 }
@@ -322,6 +334,7 @@ void SystemCheckPro(void const * argument)
 			NowWalkPhase_g = ERROR_WALK_PHASE;
 			NextWalkPhase_g = ERROR_WALK_PHASE;
 			LastWalkPhase_g = ERROR_WALK_PHASE;
+			SetExternalCtrlCmd( TO_KEEP );
 			vTaskSuspend(CanTxDataTaskHandle);
 		}
 		osDelay(10);
